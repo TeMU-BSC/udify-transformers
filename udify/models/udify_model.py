@@ -5,10 +5,11 @@ The base UDify model for training and prediction
 from typing import Optional, Any, Dict, List, Tuple
 from overrides import overrides
 import logging
+import collections
 
 import torch
 
-from pytorch_pretrained_bert.tokenization import BertTokenizer
+from transformers import AutoTokenizer
 
 from allennlp.common.checks import check_dimensions_match, ConfigurationError
 from allennlp.data import Vocabulary
@@ -46,7 +47,12 @@ class UdifyModel(Model):
 
         self.tasks = sorted(tasks)
         self.vocab = vocab
-        self.bert_vocab = BertTokenizer.from_pretrained("config/archive/bert-base-multilingual-cased/vocab.txt").vocab
+        self.tokenizer = AutoTokenizer.from_pretrained('xlm-roberta-base')
+        self.bert_vocab = {self.tokenizer.convert_ids_to_tokens(i): i for i in range(250001)}
+        for ii in range(4):
+            self.bert_vocab[f'[unused{ii}]'] = ii
+        self.bert_vocab[self.tokenizer.convert_ids_to_tokens(250004)] = 250004
+        self.bert_vocab = collections.OrderedDict(self.bert_vocab)
         self.text_field_embedder = text_field_embedder
         self.post_encoder_embedder = post_encoder_embedder
         self.shared_encoder = encoder
@@ -156,8 +162,8 @@ class UdifyModel(Model):
 
         # BERT token dropout
         if "bert" in tokens:
-            oov_token = self.bert_vocab["[MASK]"]
-            ignore_tokens = [self.bert_vocab["[PAD]"], self.bert_vocab["[CLS]"], self.bert_vocab["[SEP]"]]
+            oov_token = self.bert_vocab["<mask>"]
+            ignore_tokens = [self.bert_vocab["<pad>"], self.bert_vocab["<s>"], self.bert_vocab["</s>"]]
             tokens["bert"] = self.token_dropout(tokens["bert"],
                                                 oov_token=oov_token,
                                                 padding_tokens=ignore_tokens,

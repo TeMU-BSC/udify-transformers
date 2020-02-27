@@ -3,16 +3,16 @@ An extension of AllenNLP's BERT pretrained helper classes. Supports modification
 a sliding window approach for long sentences.
 """
 
-from typing import Dict, List, Callable, Tuple
+from typing import Dict, List, Callable, Tuple, Any
 import logging
+import collections
 
 from overrides import overrides
 
 import torch
 import torch.nn.functional as F
 
-from pytorch_pretrained_bert.tokenization import BertTokenizer
-from pytorch_pretrained_bert.modeling import BertModel, BertConfig
+from transformers import AutoTokenizer, AutoConfig, AutoModel
 
 from allennlp.common.util import pad_sequence_to_length
 from allennlp.modules.token_embedders import TokenEmbedder
@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 # TODO(joelgrus): Figure out how to generate token_type_ids out of this token indexer.
 
 # This is the default list of tokens that should not be lowercased.
-_NEVER_LOWERCASE = ['[UNK]', '[SEP]', '[PAD]', '[CLS]', '[MASK]']
+_NEVER_LOWERCASE = []
 
 
 class WordpieceIndexer(TokenIndexer[int]):
@@ -61,7 +61,7 @@ class WordpieceIndexer(TokenIndexer[int]):
         case if you're also using other embeddings based on cased tokens).
     never_lowercase: ``List[str]``, optional
         Tokens that should never be lowercased. Default is
-        ['[UNK]', '[SEP]', '[PAD]', '[CLS]', '[MASK]'].
+        [].
     start_tokens : ``List[str]``, optional (default=``None``)
         These are prepended to the tokens provided to ``tokens_to_indices``.
     end_tokens : ``List[str]``, optional (default=``None``)
@@ -75,6 +75,7 @@ class WordpieceIndexer(TokenIndexer[int]):
     """
     def __init__(self,
                  vocab: Dict[str, int],
+                 tokenizer: Any,
                  wordpiece_tokenizer: Callable[[str], List[str]],
                  namespace: str = "wordpiece",
                  use_starting_offsets: bool = False,
@@ -83,7 +84,7 @@ class WordpieceIndexer(TokenIndexer[int]):
                  never_lowercase: List[str] = None,
                  start_tokens: List[str] = None,
                  end_tokens: List[str] = None,
-                 separator_token: str = "[SEP]",
+                 separator_token: str = "</s>",
                  truncate_long_sequences: bool = True,
                  token_min_padding_length: int = 0) -> None:
 
@@ -94,6 +95,7 @@ class WordpieceIndexer(TokenIndexer[int]):
         #    sentence -> [words], and then word -> [wordpieces]
         # In AllenNLP, the first step is implemented as the ``BertSimpleWordSplitter``,
         # and this token indexer handles the second.
+        self.tokenizer = tokenizer
         self.wordpiece_tokenizer = wordpiece_tokenizer
 
         self._namespace = namespace
@@ -149,9 +151,10 @@ class WordpieceIndexer(TokenIndexer[int]):
 
         # Obtain a nested sequence of wordpieces, each represented by a list of wordpiece ids
         token_wordpiece_ids = [
-            [self.vocab[wordpiece] for wordpiece in self.wordpiece_tokenizer(token)]
+            [self.tokenizer._convert_token_to_id(wordpiece) for wordpiece in self.wordpiece_tokenizer(token)]
             for token in text
         ]
+
 
         # offsets[i] will give us the index into wordpiece_ids
         # for the wordpiece "corresponding to" the i-th input token.
@@ -282,7 +285,7 @@ class PretrainedBertIndexer(WordpieceIndexer):
     Parameters
     ----------
     pretrained_model: ``str``
-        Either the name of the pretrained model to use (e.g. 'bert-base-uncased'),
+        Either the name of the pretrained model to use (e.g. 'xlm-roberta-base'),
         or the path to the .txt file with its vocabulary.
 
         If the name is a key in the list of pretrained models at
@@ -296,7 +299,7 @@ class PretrainedBertIndexer(WordpieceIndexer):
         Whether to lowercase the tokens before converting to wordpiece ids.
     never_lowercase: ``List[str]``, optional
         Tokens that should never be lowercased. Default is
-        ['[UNK]', '[SEP]', '[PAD]', '[CLS]', '[MASK]'].
+        [].
     max_pieces: int, optional (default: 512)
         The BERT embedder uses positional embeddings and so has a corresponding
         maximum length for its input ids. Any inputs longer than this will
@@ -311,7 +314,7 @@ class PretrainedBertIndexer(WordpieceIndexer):
     def __init__(self,
                  pretrained_model: str,
                  use_starting_offsets: bool = False,
-                 do_lowercase: bool = True,
+                 do_lowercase: bool = False,
                  never_lowercase: List[str] = None,
                  max_pieces: int = 512,
                  truncate_long_sequences: bool = False) -> None:
@@ -322,17 +325,24 @@ class PretrainedBertIndexer(WordpieceIndexer):
             logger.warning("Your BERT model appears to be uncased, "
                            "but your indexer is not lowercasing tokens.")
 
-        bert_tokenizer = BertTokenizer.from_pretrained(pretrained_model, do_lower_case=do_lowercase)
-        super().__init__(vocab=bert_tokenizer.vocab,
-                         wordpiece_tokenizer=bert_tokenizer.wordpiece_tokenizer.tokenize,
+        bert_tokenizer = AutoTokenizer.from_pretrained('xlm-roberta-base')
+        bert_vocab = {bert_tokenizer.convert_ids_to_tokens(i): i for i in range(250001)}
+        for ii in range(4):
+            bert_vocab[f'[unused{ii}]'] = ii
+        bert_vocab[bert_tokenizer.convert_ids_to_tokens(250004)] = 250004
+        bert_vocab = collections.OrderedDict(bert_vocab)
+
+        super().__init__(vocab=bert_vocab,
+                         tokenizer=bert_tokenizer,
+                         wordpiece_tokenizer=bert_tokenizer._tokenize,
                          namespace="bert",
                          use_starting_offsets=use_starting_offsets,
                          max_pieces=max_pieces,
                          do_lowercase=do_lowercase,
                          never_lowercase=never_lowercase,
-                         start_tokens=["[CLS]"],
-                         end_tokens=["[SEP]"],
-                         separator_token="[SEP]",
+                         start_tokens=["<s>"],
+                         end_tokens=["</s>"],
+                         separator_token="</s>",
                          truncate_long_sequences=truncate_long_sequences)
 
 
@@ -388,7 +398,7 @@ class BertEmbedder(TokenEmbedder):
         Options: "mix", "last", "all"
     """
     def __init__(self,
-                 bert_model: BertModel,
+                 bert_model: AutoModel.from_pretrained('xlm-roberta-base'),
                  max_pieces: int = 512,
                  start_tokens: int = 1,
                  end_tokens: int = 1,
@@ -551,7 +561,7 @@ class UdifyPretrainedBertEmbedder(BertEmbedder):
                  dropout: float = 0.1,
                  layer_dropout: float = 0.1,
                  combine_layers: str = "mix") -> None:
-        model = BertModel.from_pretrained(pretrained_model)
+        model = AutoModel.from_pretrained(pretrained_model)
 
         for param in model.parameters():
             param.requires_grad = requires_grad
@@ -586,7 +596,7 @@ class UdifyPredictionBertEmbedder(BertEmbedder):
                  dropout: float = 0.1,
                  layer_dropout: float = 0.1,
                  combine_layers: str = "mix") -> None:
-        model = BertModel(BertConfig.from_json_file(bert_config))
+        model = AutoModel.from_pretrained('xlm-roberta-base')
 
         for param in model.parameters():
             param.requires_grad = requires_grad

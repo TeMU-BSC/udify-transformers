@@ -17,5 +17,5 @@ parser.add_argument("--output_path", default=None, type=str, help="The path to o
 
 args = parser.parse_args()
 
-bert_config = "config/archive/bert-base-multilingual-cased/bert_config.json"
+bert_config = "config/archive/xlm-roberta-base/bert_config.json"
 util.archive_bert_model(args.archive_dir, bert_config, args.output_path)

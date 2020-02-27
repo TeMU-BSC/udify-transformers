@@ -1,4 +1,5 @@
 allennlp==0.9.0
-tensorflow
+tensorflow==2.0.0
 pandas
 jupyter
+transformers
