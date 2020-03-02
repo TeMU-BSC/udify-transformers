@@ -12,7 +12,8 @@ from allennlp.data.dataset_readers.dataset_reader import DatasetReader
 from allennlp.data.fields import Field, TextField, SequenceLabelField, MetadataField
 from allennlp.data.instance import Instance
 from allennlp.data.token_indexers import SingleIdTokenIndexer, TokenIndexer
-from allennlp.data.tokenizers.word_splitter import SpacyWordSplitter, WordSplitter
+from allennlp.data.tokenizers.spacy_tokenizer import SpacyTokenizer
+from allennlp.data.tokenizers.tokenizer import Tokenizer
 from allennlp.data.tokenizers import Token
 
 from udify.dataset_readers.lemma_edit import gen_lemma_rule
@@ -138,13 +139,13 @@ class UniversalDependenciesRawDatasetReader(DatasetReader):
 
     def __init__(self,
                  dataset_reader: DatasetReader,
-                 tokenizer: WordSplitter = None) -> None:
+                 tokenizer: Tokenizer = None) -> None:
         super().__init__(lazy=dataset_reader.lazy)
         self.dataset_reader = dataset_reader
         if tokenizer:
             self.tokenizer = tokenizer
         else:
-            self.tokenizer = SpacyWordSplitter(language="xx_ent_wiki_sm")
+            self.tokenizer = SpacyTokenizer(language="xx_ent_wiki_sm")
 
     @overrides
     def _read(self, file_path: str):

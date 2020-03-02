@@ -16,7 +16,7 @@ import torch
 from allennlp.common.checks import ConfigurationError
 from allennlp.common import Params
 from allennlp.common.params import with_fallback
-from allennlp.commands.make_vocab import make_vocab_from_params
+from allennlp.training.util import make_vocab_from_params
 from allennlp.commands.predict import _PredictManager
 from allennlp.common.checks import check_for_gpu
 from allennlp.models.archival import load_archive
