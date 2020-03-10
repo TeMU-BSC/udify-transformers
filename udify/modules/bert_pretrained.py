@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 _NEVER_LOWERCASE = ['[UNK]', '[SEP]', '[PAD]', '[CLS]', '[MASK]']
 
 
-class WordpieceIndexer(TokenIndexer):
+class WordpieceIndexer(TokenIndexer[int]):
     """
     A token indexer that does the wordpiece-tokenization (e.g. for BERT embeddings).
     If you are using one of the pretrained BERT models, you'll want to use the ``PretrainedBertIndexer``
@@ -244,7 +244,7 @@ class WordpieceIndexer(TokenIndexer):
             "mask": mask
         }
 
-    # @overrides
+    @overrides
     def get_padding_token(self) -> int:
         return 0
 
@@ -252,7 +252,7 @@ class WordpieceIndexer(TokenIndexer):
     def get_padding_lengths(self, token: int) -> Dict[str, int]:  # pylint: disable=unused-argument
         return {}
 
-    # @overrides
+    @overrides
     def as_padded_tensor(
             self,
             tokens: Dict[str, List[int]],
@@ -264,7 +264,7 @@ class WordpieceIndexer(TokenIndexer):
             for key, val in tokens.items()
         }
 
-    # @overrides
+    @overrides
     def get_keys(self, index_name: str) -> List[str]:
         """
         We need to override this because the indexer generates multiple keys.
@@ -586,7 +586,7 @@ class UdifyPredictionBertEmbedder(BertEmbedder):
                  dropout: float = 0.1,
                  layer_dropout: float = 0.1,
                  combine_layers: str = "mix") -> None:
-        model = BertModel(BertConfig.from_json_file(bert_config))
+        model = AutoModel(AutoConfig.from_json_file(bert_config))
 
         for param in model.parameters():
             param.requires_grad = requires_grad

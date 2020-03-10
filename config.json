@@ -1,0 +1,174 @@
+{
+    "dataset_reader": {
+        "type": "udify_universal_dependencies",
+        "lazy": false,
+        "token_indexers": {
+            "bert": {
+                "type": "udify-bert-pretrained",
+                "do_lowercase": false,
+                "pretrained_model": "config/archive/bert-base-multilingual-cased/vocab.txt",
+                "use_starting_offsets": true
+            },
+            "tokens": {
+                "type": "single_id",
+                "lowercase_tokens": true
+            }
+        }
+    },
+    "iterator": {
+        "type": "bucket",
+        "batch_size": 64,
+        "biggest_batch_first": true,
+        "maximum_samples_per_batch": [
+            "num_tokens",
+            3200
+        ],
+        "sorting_keys": [
+            [
+                "tokens",
+                "num_tokens"
+            ]
+        ]
+    },
+    "model": {
+        "type": "udify_model",
+        "decoders": {
+            "deps": {
+                "type": "udify_dependency_decoder",
+                "arc_representation_dim": 768,
+                "dropout": 0.5,
+                "encoder": {
+                    "type": "pass_through",
+                    "input_dim": 768
+                },
+                "pos_embed_dim": null,
+                "tag_representation_dim": 256
+            },
+            "feats": {
+                "type": "udify_tag_decoder",
+                "adaptive": true,
+                "dropout": 0.5,
+                "encoder": {
+                    "type": "pass_through",
+                    "input_dim": 768
+                },
+                "label_smoothing": 0.03,
+                "task": "feats"
+            },
+            "lemmas": {
+                "type": "udify_tag_decoder",
+                "adaptive": true,
+                "dropout": 0.5,
+                "encoder": {
+                    "type": "pass_through",
+                    "input_dim": 768
+                },
+                "label_smoothing": 0.03,
+                "task": "lemmas"
+            },
+            "upos": {
+                "type": "udify_tag_decoder",
+                "dropout": 0.5,
+                "encoder": {
+                    "type": "pass_through",
+                    "input_dim": 768
+                },
+                "label_smoothing": 0.03,
+                "task": "upos"
+            }
+        },
+        "dropout": 0.5,
+        "encoder": {
+            "type": "pass_through",
+            "input_dim": 768
+        },
+        "layer_dropout": 0.08,
+        "mix_embedding": 12,
+        "tasks": [
+            "upos",
+            "feats",
+            "lemmas",
+            "deps"
+        ],
+        "text_field_embedder": {
+            "type": "udify_embedder",
+            "allow_unmatched_keys": true,
+            "dropout": 0.4,
+            "embedder_to_indexer_map": {
+                "bert": [
+                    "bert",
+                    "bert-offsets"
+                ]
+            },
+            "token_embedders": {
+                "bert": {
+                    "type": "udify-bert-predictor",
+                    "combine_layers": "all",
+                    "dropout": 0.1,
+                    "layer_dropout": 0.08,
+                    "bert_config": "config/archive/bert-base-multilingual-cased/bert_config.json",
+                    "requires_grad": true
+                }
+            }
+        },
+        "word_dropout": 0.1
+    },
+    "train_data_path": "data/ud/multilingual/train.conllu",
+    "validation_data_path": "data/ud/multilingual/dev.conllu",
+    "test_data_path": "data/ud/multilingual/test.conllu",
+    "trainer": {
+        "cuda_device": 0,
+        "grad_clipping": 10,
+        "grad_norm": 5,
+        "histogram_interval": 5000,
+        "keep_serialized_model_every_num_seconds": 7200,
+        "learning_rate_scheduler": {
+            "type": "ulmfit_sqrt",
+            "decay_factor": 0.02,
+            "discriminative_fine_tuning": true,
+            "factor": 5,
+            "gradual_unfreezing": true,
+            "model_size": 1,
+            "start_step": 11576,
+            "warmup_steps": 4000
+        },
+        "model_save_interval": 3600,
+        "num_epochs": 200,
+        "num_serialized_models_to_keep": 10,
+        "optimizer": {
+            "type": "bert_adam",
+            "b1": 0.9,
+            "b2": 0.99,
+            "lr": 0.001,
+            "parameter_groups": [
+                [
+                    [
+                        "^text_field_embedder.*.bert_model.embeddings",
+                        "^text_field_embedder.*.bert_model.encoder"
+                    ],
+                    {}
+                ],
+                [
+                    [
+                        "^text_field_embedder.*._scalar_mix",
+                        "^text_field_embedder.*.pooler",
+                        "^scalar_mix",
+                        "^decoders",
+                        "^shared_encoder"
+                    ],
+                    {}
+                ]
+            ],
+            "weight_decay": 0.01
+        },
+        "patience": 20,
+        "should_log_learning_rate": true,
+        "should_log_parameter_statistics": true,
+        "summary_interval": 2500,
+        "validation_metric": "+.run/.sum"
+    },
+    "vocabulary": {
+        "directory_path": "data/vocab/multilingual/vocabulary"
+    },
+    "evaluate_on_test": true
+}

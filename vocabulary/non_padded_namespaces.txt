@@ -1,0 +1,6 @@
+upos
+*labels
+xpos
+feats
+*tags
+lemmas

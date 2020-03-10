@@ -19,10 +19,12 @@ logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s - %(message)s
 logger = logging.getLogger(__name__)
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--name", default="", type=str, help="Log dir name")
+# parser.add_argument("--name", default='xmultilingual', type=str, help="Log dir name")
+parser.add_argument("--name", type=str, help="Log dir name")
 parser.add_argument("--base_config", default="config/udify_base.json", type=str, help="Base configuration file")
-parser.add_argument("--config", default=[], type=str, nargs="+", help="Overriding configuration files")
-parser.add_argument("--device", default=None, type=int, help="CUDA device; set to -1 for CPU")
+# parser.add_argument("--config", default=['config/ud/xmultilingual/udify_xlmr_finetune.json'], type=str, nargs="+", help="Overriding configuration files")
+parser.add_argument("--config", type=str, nargs="+", help="Overriding configuration files")
+parser.add_argument("--device", type=int, help="CUDA device; set to -1 for CPU")
 parser.add_argument("--resume", type=str, help="Resume training with the given model")
 parser.add_argument("--lazy", default=None, action="store_true", help="Lazy load the dataset")
 parser.add_argument("--cleanup_archive", action="store_true", help="Delete the model archive")
@@ -61,6 +63,7 @@ if "vocabulary" in train_params:
     train_params["vocabulary"].pop("non_padded_namespaces", None)
 
 predict_params = train_params.duplicate()
+params = train_params.duplicate()
 
 import_submodules("udify")
 

@@ -201,7 +201,7 @@ class UdifyModel(Model):
         else:
             return tokens
 
-    # @overrides
+    @overrides
     def decode(self, output_dict: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
         for task in self.tasks:
             self.decoders[task].decode(output_dict)

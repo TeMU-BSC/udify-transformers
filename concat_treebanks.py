@@ -15,8 +15,8 @@ logger = logging.getLogger(__name__)
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument("--output_dir", default='data/ud/multilingual', type=str, help="The path to output the concatenated files")
-parser.add_argument("--dataset_dir", default="data/ud-treebanks-v2.5", type=str,
+parser.add_argument("output_dir", type=str, help="The path to output the concatenated files")
+parser.add_argument("--dataset_dir", default="data/ud-treebanks-v2.3", type=str,
                     help="The path containing all UD treebanks")
 parser.add_argument("--treebanks", default=[], type=str, nargs="+",
                     help="Specify a list of treebanks to use; leave blank to default to all treebanks available")
