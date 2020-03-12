@@ -13,7 +13,7 @@ import torch
 import torch.nn.functional as F
 
 from transformers import AutoTokenizer, AutoConfig, AutoModel
-from transformers import XLMRobertaModel
+from transformers import XLMRobertaModel, XLMRobertaTokenizer
 
 from allennlp.common.util import pad_sequence_to_length
 from allennlp.modules.token_embedders import TokenEmbedder
@@ -76,7 +76,7 @@ class WordpieceIndexer(TokenIndexer[int]):
     """
     def __init__(self,
                  vocab: Dict[str, int],
-                 tokenizer: Any,
+                 tokenizer: XLMRobertaTokenizer,
                  wordpiece_tokenizer: Callable[[str], List[str]],
                  namespace: str = "wordpiece",
                  use_starting_offsets: bool = False,
@@ -477,17 +477,19 @@ class XlmrEmbedder(TokenEmbedder):
             # Now combine the sequences along the batch dimension
             input_ids = torch.cat(split_input_ids, dim=0)
 
-        if token_type_ids is None:
-            token_type_ids = torch.zeros_like(input_ids)
+        # if token_type_ids is None:
+        #     token_type_ids = torch.zeros_like(input_ids)
 
         input_mask = (input_ids != 0).long()
 
         # input_ids may have extra dimensions, so we reshape down to 2-d
         # before calling the BERT model and then reshape back at the end.
-        all_encoder_layers, _ = self.bert_model(input_ids=util.combine_initial_dims(input_ids),
-                                                token_type_ids=util.combine_initial_dims(token_type_ids),
+        # MAYBE CHANGE THIS XLMRobertaForTokenClassification
+        all_encoder_layers = self.bert_model(input_ids=util.combine_initial_dims(input_ids),
+                                                # token_type_ids=util.combine_initial_dims(token_type_ids),
                                                 attention_mask=util.combine_initial_dims(input_mask))
-        all_encoder_layers = torch.stack(tuple(all_encoder_layers))
+
+        all_encoder_layers = torch.stack(all_encoder_layers[2][1:]) # dump initial embeddings
 
         if needs_split:
             # First, unpack the output embeddings into one long sequence again
@@ -541,8 +543,8 @@ class XlmrEmbedder(TokenEmbedder):
             range_vector = util.get_range_vector(offsets2d.size(0),
                                                  device=util.get_device_of(recombined_embeddings)).unsqueeze(1)
             # selected embeddings is also (batch_size * d1 * ... * dn, orig_sequence_length)
-            # selected_embeddings = recombined_embeddings[:, range_vector, offsets2d]
-            selected_embeddings = recombined_embeddings[range_vector, offsets2d]
+            selected_embeddings = recombined_embeddings[:, range_vector, offsets2d]
+            # selected_embeddings = recombined_embeddings[range_vector, offsets2d]
 
             layers = util.uncombine_initial_dims(selected_embeddings, offsets.size())
 
@@ -561,7 +563,9 @@ class UdifyPretrainedXlmrEmbedder(XlmrEmbedder):
                  dropout: float = 0.1,
                  layer_dropout: float = 0.1,
                  combine_layers: str = "mix") -> None:
-        model = XLMRobertaModel.from_pretrained(pretrained_model)
+        config = AutoConfig.from_pretrained(pretrained_model)
+        config.output_hidden_states = True
+        model = AutoModel.from_config(config)
 
         for param in model.parameters():
             param.requires_grad = requires_grad
@@ -596,7 +600,10 @@ class UdifyPredictionXlmrEmbedder(XlmrEmbedder):
                  dropout: float = 0.1,
                  layer_dropout: float = 0.1,
                  combine_layers: str = "mix") -> None:
-        model = XLMRobertaModel.from_pretrained('xlm-roberta-base')
+        
+        config = AutoConfig.from_pretrained('xlm-roberta-base')
+        config.output_hidden_states = True
+        model = AutoModel.from_config(config)
 
         for param in model.parameters():
             param.requires_grad = requires_grad

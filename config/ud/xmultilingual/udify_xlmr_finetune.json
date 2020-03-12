@@ -23,7 +23,7 @@
     "model": {
       "type": "udify_model_xlmr",
       "word_dropout": 0.2,
-      // "mix_embedding": 12,
+      "mix_embedding": 12,
       "layer_dropout": 0.1,
       "tasks": ["upos", "feats", "lemmas", "deps"],
       "text_field_embedder": {
