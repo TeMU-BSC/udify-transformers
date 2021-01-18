@@ -23,7 +23,7 @@ parser.add_argument("--name", default='xmultilingual', type=str, help="Log dir n
 # parser.add_argument("--name", type=str, help="Log dir name")
 parser.add_argument("--base_config", default="config/udify_base.json", type=str, help="Base configuration file")
 # parser.add_argument("--config", type=str, nargs="+", help="Overriding configuration files")
-parser.add_argument("--config", default=['config/ud/xmultilingual/udify_xlmr_finetune.json'], type=str, nargs="+", help="Overriding configuration files")
+parser.add_argument("--config", type=str, nargs="+", help="Overriding configuration files")
 parser.add_argument("--device", default=0, type=int, help="CUDA device; set to -1 for CPU")
 parser.add_argument("--resume", type=str, help="Resume training with the given model")
 parser.add_argument("--lazy", default=None, action="store_true", help="Lazy load the dataset")
@@ -31,6 +31,7 @@ parser.add_argument("--cleanup_archive", action="store_true", help="Delete the m
 parser.add_argument("--replace_vocab", action="store_true", help="Create a new vocab and replace the cached one")
 parser.add_argument("--archive_bert", action="store_true", help="Archives the finetuned BERT model after training")
 parser.add_argument("--predictor", default="udify_predictor", type=str, help="The type of predictor to use")
+parser.add_argument("--dataset_dir", default="data/ud-treebanks-v2.3", type=str, help="The path containing all UD treebanks")
 
 args = parser.parse_args()
 
