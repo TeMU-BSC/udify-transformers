@@ -8,7 +8,7 @@
         },
         "roberta": {
           "type": "udify-roberta-pretrained",
-          "pretrained_model": "roberta-base",
+          "pretrained_model": "/home/usuaris/veu/casimiro.pio.carrino/projects/language-models/models/roberta-ca-base-test",
           "do_lowercase": false,
           "use_starting_offsets": true
         }
@@ -36,7 +36,7 @@
         "token_embedders": {
           "roberta": {
             "type": "udify-roberta-pretrained",
-            "pretrained_model": "roberta-base",
+            "pretrained_model": "/home/usuaris/veu/casimiro.pio.carrino/projects/language-models/models/roberta-ca-base-test",
             "requires_grad": true,
             "dropout": 0.15,
             "layer_dropout": 0.1,
