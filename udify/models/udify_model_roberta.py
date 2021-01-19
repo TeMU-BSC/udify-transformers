@@ -19,6 +19,8 @@ from allennlp.nn.util import get_text_field_mask
 
 from udify.modules.scalar_mix import ScalarMixWithDropout
 
+from udify import ROBERTA
+
 logger = logging.getLogger(__name__)
 
 
@@ -46,7 +48,7 @@ class UdifyModelRoberta(Model):
 
         self.tasks = sorted(tasks)
         self.vocab = vocab
-        self.bert_tokenizer = AutoTokenizer.from_pretrained('roberta-base')
+        self.bert_tokenizer = AutoTokenizer.from_pretrained(ROBERTA)
         self.bert_vocab = {self.bert_tokenizer.convert_ids_to_tokens(i): i for i in range(250001)}
         self.bert_vocab[self.bert_tokenizer.convert_ids_to_tokens(250004)] = 250002
         self.bert_vocab = collections.OrderedDict(self.bert_vocab)

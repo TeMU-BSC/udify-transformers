@@ -24,6 +24,8 @@ from allennlp.nn import util
 
 from udify.modules.scalar_mix import ScalarMixWithDropout
 
+from udify import ROBERTA
+
 logger = logging.getLogger(__name__)
 
 # TODO(joelgrus): Figure out how to generate token_type_ids out of this token indexer.
@@ -601,7 +603,7 @@ class UdifyPredictionRobertaEmbedder(RobertaEmbedder):
                  layer_dropout: float = 0.1,
                  combine_layers: str = "mix") -> None:
 
-        config = AutoConfig.from_pretrained('roberta-base')
+        config = AutoConfig.from_pretrained(ROBERTA)
         config.output_hidden_states = True
         model = AutoModel.from_config(config)
 
