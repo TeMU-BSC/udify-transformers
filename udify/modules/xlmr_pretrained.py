@@ -113,15 +113,15 @@ class WordpieceIndexer(TokenIndexer[int]):
             self._never_lowercase = set(never_lowercase)
 
         # Convert the start_tokens and end_tokens to wordpiece_ids
-        self._start_piece_ids = [self.tokenizer._convert_token_to_id(wordpiece)
+        self._start_piece_ids = [self.tokenizer.convert_tokens_to_ids(wordpiece)
                                  for token in (start_tokens or [])
                                  for wordpiece in wordpiece_tokenizer(token)]
-        self._end_piece_ids = [self.tokenizer._convert_token_to_id(wordpiece)
+        self._end_piece_ids = [self.tokenizer.convert_tokens_to_ids(wordpiece)
                                for token in (end_tokens or [])
                                for wordpiece in wordpiece_tokenizer(token)]
 
         # Convert the separator_token to wordpiece_ids
-        self._separator_ids = [self.tokenizer._convert_token_to_id(wordpiece)
+        self._separator_ids = [self.tokenizer.convert_tokens_to_ids(wordpiece)
                                for wordpiece in wordpiece_tokenizer(separator_token)]
 
     @overrides
@@ -333,7 +333,7 @@ class PretrainedXlmrIndexer(WordpieceIndexer):
 
         super().__init__(vocab=bert_vocab,
                          tokenizer=bert_tokenizer,
-                         wordpiece_tokenizer=bert_tokenizer._tokenize,
+                         wordpiece_tokenizer=bert_tokenizer.tokenize,
                          namespace="bert",
                          use_starting_offsets=use_starting_offsets,
                          max_pieces=max_pieces,
