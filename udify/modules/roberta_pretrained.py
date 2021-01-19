@@ -154,7 +154,7 @@ class WordpieceIndexer(TokenIndexer[int]):
 
         # Obtain a nested sequence of wordpieces, each represented by a list of wordpiece ids
         token_wordpiece_ids = [
-            [self.tokenizer._convert_token_to_id(wordpiece) for wordpiece in self.wordpiece_tokenizer(token)]
+            [self.tokenizer.convert_tokens_to_ids(wordpiece) for wordpiece in self.wordpiece_tokenizer(token)]
             for token in text
         ]
 
