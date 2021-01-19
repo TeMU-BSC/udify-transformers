@@ -19,7 +19,7 @@ from allennlp.nn.util import get_text_field_mask
 
 from udify.modules.scalar_mix import ScalarMixWithDropout
 
-from udify import ROBERTA
+from udify.constants import ROBERTA
 
 logger = logging.getLogger(__name__)
 

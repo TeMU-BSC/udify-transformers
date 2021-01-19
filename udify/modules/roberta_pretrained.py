@@ -24,7 +24,7 @@ from allennlp.nn import util
 
 from udify.modules.scalar_mix import ScalarMixWithDropout
 
-from udify import ROBERTA
+from udify.constants import ROBERTA
 
 logger = logging.getLogger(__name__)
 

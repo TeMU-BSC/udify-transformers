@@ -4,5 +4,3 @@ from udify.modules import *
 from udify.optimizers import *
 from udify.predictors import *
 from udify import *
-
-ROBERTA = 'roberta-base'
