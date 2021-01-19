@@ -1,3 +1,5 @@
+## The original UDify only supports BERT via an old version of Huggingface Transformers. This project, based on a fork for XLMR, is an extension to other models from the Huggingface library.
+
 # UDify
 
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
